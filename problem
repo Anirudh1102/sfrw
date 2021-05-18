@@ -1,0 +1,55 @@
+// For Reader processes
+P( lock ); // lock is a mutex and is initializes to 1.
+ if ( nw_active + nw_waiting == 0 )
+  {
+     nr_active++; // Notify we are active
+     V( r_sem );  // Allow ourself to get through
+  }
+ else
+   nr_waiting++;  // We are waiting
+ V( lock );
+ P( r_sem );  // Readers will wait here, if they must wait.
+
+ READING...
+
+ P( lock );
+ nw_active--;
+ if (( nr_active == 0 ) && ( nw_waiting > 0 )) // If we are the last reader
+   {
+      while ( nw_waiting > 0 )  // Allow all waiting writers to enter
+      {
+         V( w_sem );  // wake a writer;
+         w_active++;  // one more active writer
+         w_waiting--; // one less waiting writer.
+      }
+    }
+ V( lock );
+ 
+ 
+ 
+ // For Writer processes
+ P( lock ); // lock is a mutex and is initializes to 1.
+ if ( nr_active + nr_waiting == 0 )
+  {
+     nw_active++; // Notify we are active
+     V( w_sem );  // Allow ourself to get through
+  }
+ else
+   nw_waiting++;  // We are waiting
+ V( lock );
+ P( w_sem );  // Writers will wait here, if they must wait.
+
+ READING...
+
+ P( lock );
+ nw_active--;
+ if (( nw_active == 0 ) && ( nr_waiting > 0 )) // If we are the last writer
+   {
+      while ( nr_waiting > 0 )  // Allow all waiting readers to enter
+      {
+         V( r_sem );  // wake a reader;
+         r_active++;  // one more active reader
+         r_waiting--; // one less waiting reader.
+      }
+    }
+ V( lock );
